@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PJA Team</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050507;--panel:#101016;--line:#23232e;--red:#e11d2e;--moon:#9ec5ff;--tx:#f4f4f6;--mut:#8b8b99}
+*{box-sizing:border-box;margin:0}
+body{background:radial-gradient(900px 400px at 50% -10%,#2a0a10 0,var(--bg) 70%) var(--bg);color:var(--tx);font-family:Cairo,system-ui,sans-serif;min-height:100vh;padding-bottom:90px}
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+.logo{font-weight:800;font-size:26px;letter-spacing:3px}.logo b{color:var(--red)}
+button,input,textarea,select{font:inherit;color:inherit}
+.btn{background:var(--red);border:0;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600}
+.btn.ghost{background:transparent;border:1px solid var(--line)}
+.btn:focus-visible,nav button:focus-visible,a:focus-visible{outline:2px solid var(--moon);outline-offset:2px}
+main{max-width:900px;margin:0 auto;padding:20px}
+.tab{display:none}.tab.active{display:block}
+h2{font-size:22px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card h3{font-size:17px;margin-bottom:6px}
+.card p{color:var(--mut);white-space:pre-line;font-size:14px;margin:6px 0}
+.links{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.links a{color:var(--moon);border:1px solid var(--line);padding:3px 10px;border-radius:20px;text-decoration:none;font-size:13px}
+.links a:hover{border-color:var(--moon)}
+.price{color:var(--red);font-weight:800;font-size:18px}
+.tag{font-size:12px;color:var(--moon)}
+.empty{color:var(--mut);padding:30px;text-align:center;border:1px dashed var(--line);border-radius:12px}
+.fab{position:fixed;left:50%;bottom:62px;transform:translateX(-50%);width:58px;height:58px;border-radius:50%;background:var(--red);border:4px solid var(--bg);font-size:32px;line-height:1;cursor:pointer;z-index:5;box-shadow:0 0 24px #e11d2e66}
+.fab.hide{display:none}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;direction:ltr;background:#0b0b10ee;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0)}
+nav button{flex:1;background:none;border:0;padding:14px 4px;color:var(--mut);cursor:pointer;font-size:14px;border-top:3px solid transparent}
+nav button.on{color:var(--tx);border-top-color:var(--red)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.chips button{background:var(--panel);border:1px solid var(--line);padding:5px 12px;border-radius:20px;cursor:pointer}
+.chips button.on{border-color:var(--red);background:#2a0a10}
+.sup{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.sup button{background:var(--panel);border:1px solid var(--line);padding:16px;border-radius:12px;cursor:pointer;text-align:right}
+.sup button:hover{border-color:var(--red)}
+dialog{background:var(--panel);color:var(--tx);border:1px solid var(--line);border-radius:14px;padding:20px;width:min(440px,92vw)}
+dialog::backdrop{background:#000a}
+label{display:block;margin:10px 0 4px;font-size:14px;color:var(--mut)}
+input,textarea,select{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px}
+textarea{min-height:90px}
+.row{display:flex;gap:8px;margin-top:16px}
+.note{background:#2a0a10;border-right:3px solid var(--red);padding:8px 10px;border-radius:6px;font-size:13px;margin-top:10px}
+#toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:var(--moon);color:#000;padding:8px 18px;border-radius:8px;display:none;z-index:9;font-weight:600}
+@media(prefers-reduced-motion:no-preference){.card{transition:border-color .2s}.card:hover{border-color:#3b3b4a}}
+</style>
+</head>
+<body>
+<header><div class="logo">P<b>J</b>A</div><button class="btn ghost" id="auth">تسجيل الدخول بـ Google</button></header>
+<main>
+<section class="tab" id="team"><h2>حسابات الفريق</h2><div class="grid" id="teamLinks"></div><h2 style="margin-top:24px">ألعاب الفريق</h2><div class="chips" id="games"></div></section>
+<section class="tab active" id="players"><h2>اللاعبون</h2><div class="grid" id="playerList"></div></section>
+<section class="tab" id="support"><h2>الدعم</h2><div class="sup" id="supList"></div><div id="adminBox" style="display:none;margin-top:26px"><h2>الطلبات (للإدارة)</h2><div class="grid" id="reqList"></div></div></section>
+<section class="tab" id="store"><h2>متجر PJA</h2><div class="chips" id="cats"></div><div class="grid" id="prodList"></div></section>
+</main>
+<button class="fab" id="fab" aria-label="إضافة">+</button>
+<nav id="nav">
+<button data-t="team">الفريق</button><button data-t="players" class="on">اللاعبون</button><button data-t="support">الدعم</button><button data-t="store">المتجر</button>
+</nav>
+<dialog id="dlg"><form id="frm" method="dialog"></form></dialog>
+<div id="toast"></div>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import{getAuth,signInWithPopup,GoogleAuthProvider,signOut,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import{getFirestore,collection,addDoc,deleteDoc,doc,onSnapshot,query,orderBy,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig={apiKey:"AIzaSyD5K_Tqhh7l7GeTVEhZCYYRtdlkz7ukWms",authDomain:"pjateam-fa835.firebaseapp.com",projectId:"pjateam-fa835",storageBucket:"pjateam-fa835.firebasestorage.app",messagingSenderId:"1025280047102",appId:"1:1025280047102:web:fdca85c392eda1e8ed32af"};
+
+/* ===== عدّل هنا ===== */
+const ADMINS=["بريد_زن@gmail.com"]; // للواجهة فقط، الحماية الحقيقية في Firestore Rules
+const TEAM=[
+ ["تيك توك","https://tiktok.com/@PJA"],["انستغرام","https://instagram.com/PJA"],
+ ["ديسكورد الفريق","https://discord.gg/XXXX"],["كيك","https://kick.com/PJA"],["يوتيوب","https://youtube.com/@PJA"]];
+const GAMES=["Rocket League","Fortnite","FIFA","Roblox"];
+/* ==================== */
+
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const safeUrl=u=>{try{const x=new URL(u);return/^https?:$/.test(x.protocol)?x.href:""}catch{return""}};
+const link=(u,t)=>{const h=safeUrl(u);return h?`<a href="${esc(h)}" target="_blank" rel="noopener noreferrer">${t}</a>`:""};
+const toast=m=>{const t=$("#toast");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",2600)};
+let user=null,tab="players",cat="all",products=[];
+const isAdmin=()=>user&&ADMINS.includes(user.email);
+
+/* دخول */
+const login=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>toast("تعذّر تسجيل الدخول"));
+$("#auth").onclick=()=>user?signOut(auth):login();
+onAuthStateChanged(auth,u=>{user=u;$("#auth").textContent=u?`خروج (${u.displayName?.split(" ")[0]||""})`:"تسجيل الدخول بـ Google";$("#adminBox").style.display=isAdmin()?"block":"none";if(isAdmin())watchReqs();renderPlayers();renderProducts()});
+
+/* تنقل */
+const FAB={players:["إضافة لاعب",addPlayer],store:["إضافة منتج",addProduct]};
+function go(t){tab=t;document.querySelectorAll(".tab").forEach(s=>s.classList.toggle("active",s.id===t));document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));$("#fab").classList.toggle("hide",!FAB[t])}
+$("#nav").onclick=e=>e.target.dataset.t&&go(e.target.dataset.t);
+$("#fab").onclick=async()=>{if(!FAB[tab])return;if(!user){await login();if(!user)return}FAB[tab][1]()};
+
+/* نموذج عام */
+function form(title,fields,onOk,note){
+ const f=$("#frm");
+ f.innerHTML=`<h2>${title}</h2>${note?`<div class="note">${note}</div>`:""}`+fields.map(([id,lb,type,opts,req])=>`<label for="f_${id}">${lb}</label>`+
+  (type==="ta"?`<textarea id="f_${id}" ${req?"required":""}></textarea>`:type==="sel"?`<select id="f_${id}">${opts.map(([v,t])=>`<option value="${v}">${t}</option>`).join("")}</select>`:`<input id="f_${id}" type="${type}" ${req?"required":""} ${type==="number"?'min="8" max="60"':""}>`)).join("")+
+  `<div class="row"><button class="btn" value="ok">حفظ</button><button class="btn ghost" value="x" formnovalidate>إلغاء</button></div>`;
+ f.onsubmit=async e=>{if(e.submitter?.value!=="ok")return;e.preventDefault();const d={};fields.forEach(([id])=>d[id]=$("#f_"+id).value.trim());try{await onOk(d);$("#dlg").close();toast("تم الحفظ")}catch(err){toast(err.message||"حدث خطأ")}};
+ $("#dlg").showModal();
+}
+
+/* اللاعبون */
+function addPlayer(){form("إضافة لاعب",[["name","الاسم","text",0,1],["age","العمر (اختياري)","number"],["insta","رابط انستغرام","url"],["tiktok","رابط تيك توك","url"],["discord","رابط/معرّف ديسكورد","text"]],
+ d=>addDoc(collection(db,"players"),{uid:user.uid,name:d.name.slice(0,40),age:Number(d.age)||null,insta:safeUrl(d.insta),tiktok:safeUrl(d.tiktok),discord:d.discord.slice(0,80),createdAt:serverTimestamp()}))}
+let players=[];
+onSnapshot(query(collection(db,"players"),orderBy("createdAt","desc")),s=>{players=s.docs.map(d=>({id:d.id,...d.data()}));renderPlayers()});
+function renderPlayers(){
+ $("#playerList").innerHTML=players.length?players.map(p=>`<div class="card"><h3>${esc(p.name)}${p.age?` <span class="tag">(${p.age})</span>`:""}</h3>
+ <div class="links">${link(p.insta,"Instagram")}${link(p.tiktok,"TikTok")}${safeUrl(p.discord)?link(p.discord,"Discord"):p.discord?`<span class="tag">Discord: ${esc(p.discord)}</span>`:""}</div>
+ ${own(p)?`<div class="row"><button class="btn ghost" data-del="players/${p.id}">حذف</button></div>`:""}</div>`).join(""):`<div class="empty">ما في لاعبين بعد. اضغط + وأضف نفسك.</div>`}
+const own=x=>user&&(x.uid===user.uid||isAdmin());
+
+/* الفريق */
+$("#teamLinks").innerHTML=TEAM.map(([n,u])=>`<div class="card"><h3>${n}</h3><div class="links">${link(u,"فتح")}</div></div>`).join("");
+$("#games").innerHTML=GAMES.map(g=>`<button>${esc(g)}</button>`).join("");
+
+/* الدعم */
+const REQ=[["free","طلب لعبة مجانية"],["problem","طلب حل مشكلة"],["admin","طلب أحد المسؤولين"],["key","طلب مفتاح الديسكورد"],["dev","طلب مبرمج"],["protect","طلب حماية"],["help","مساعدة"]];
+$("#supList").innerHTML=REQ.map(([k,t])=>`<button data-req="${k}">${t}</button>`).join("");
+$("#supList").onclick=async e=>{const k=e.target.dataset.req;if(!k)return;if(!user){await login();if(!user)return}
+ const t=REQ.find(r=>r[0]===k)[1];
+ form(t,[["msg","اكتب طلبك","ta",0,1],["contact","معرّفك في ديسكورد للتواصل","text",0,1]],
+  d=>addDoc(collection(db,"requests"),{uid:user.uid,email:user.email,type:k,label:t,msg:d.msg.slice(0,1000),contact:d.contact.slice(0,60),createdAt:serverTimestamp()}),
+  k==="key"?"الديسكورد يحتاج مفتاحاً سرياً للدخول. يُرسل المفتاح فقط من القائد زن ومساعدته مالا بعد مراجعة طلبك.":"")};
+let reqWatch=false;
+function watchReqs(){if(reqWatch)return;reqWatch=true;onSnapshot(query(collection(db,"requests"),orderBy("createdAt","desc")),s=>{
+ $("#reqList").innerHTML=s.docs.map(d=>{const r=d.data();return`<div class="card"><span class="tag">${esc(r.label)}</span><h3>${esc(r.contact)}</h3><p>${esc(r.msg)}</p><div class="tag">${esc(r.email)}</div><div class="row"><button class="btn ghost" data-del="requests/${d.id}">تم</button></div></div>`}).join("")||`<div class="empty">لا طلبات.</div>`},()=>{reqWatch=false})}
+
+/* المتجر */
+const CATS=[["all","الكل"],["steam","حسابات Steam"],["games","حسابات لاعبين (Fortnite / Rocket League)"],["acc","إكسسوارات وإلكترونيات"]];
+$("#cats").innerHTML=CATS.map(([k,t])=>`<button data-c="${k}" class="${k===cat?"on":""}">${t}</button>`).join("");
+$("#cats").onclick=e=>{if(!e.target.dataset.c)return;cat=e.target.dataset.c;document.querySelectorAll("#cats button").forEach(b=>b.classList.toggle("on",b.dataset.c===cat));renderProducts()};
+function addProduct(){form("إضافة منتج",[["cat","القسم","sel",CATS.slice(1)],["name","اسم المنتج","text",0,1],["price","السعر","text",0,1],["details","التفاصيل (سطرين على الأقل)","ta",0,1],["place","الموقع","text",0,1],["delivery","يوجد توصيل؟","sel",[["yes","نعم"],["no","لا"]]]],
+ async d=>{if(d.details.split("\n").filter(l=>l.trim()).length<2)throw Error("التفاصيل لازم تكون سطرين على الأقل");
+  await addDoc(collection(db,"products"),{uid:user.uid,cat:d.cat,name:d.name.slice(0,80),price:d.price.slice(0,30),details:d.details.slice(0,800),place:d.place.slice(0,60),delivery:d.delivery==="yes",createdAt:serverTimestamp()})},
+ "المتجر نشر منتجات فقط. الدفع والتسليم بين البائع والمشتري، والفريق غير مسؤول عنهما.")}
+onSnapshot(query(collection(db,"products"),orderBy("createdAt","desc")),s=>{products=s.docs.map(d=>({id:d.id,...d.data()}));renderProducts()});
+function renderProducts(){const l=products.filter(p=>cat==="all"||p.cat===cat);
+ $("#prodList").innerHTML=l.length?l.map(p=>`<div class="card"><span class="tag">${esc(CATS.find(c=>c[0]===p.cat)?.[1]||"")}</span><h3>${esc(p.name)}</h3><div class="price">${esc(p.price)}</div><p>${esc(p.details)}</p>
+ <div class="tag">📍 ${esc(p.place)} · ${p.delivery?"يوجد توصيل":"بدون توصيل"}</div>${own(p)?`<div class="row"><button class="btn ghost" data-del="products/${p.id}">حذف</button></div>`:""}</div>`).join(""):`<div class="empty">لا منتجات في هذا القسم.</div>`}
+
+/* حذف */
+document.addEventListener("click",async e=>{const p=e.target.dataset?.del;if(!p||!confirm("متأكد؟"))return;const[c,i]=p.split("/");try{await deleteDoc(doc(db,c,i))}catch{toast("ما عندك صلاحية")}});
+go("players");
+</script>
+</body>
+</html>
