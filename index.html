@@ -20,7 +20,7 @@ main{max-width:900px;margin:0 auto;padding:20px}
 .tab{display:none}.tab.active{display:block}
 h2{font-size:22px;margin-bottom:14px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card{background:#101016d9;backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:12px;padding:14px}
 .card h3{font-size:17px;margin-bottom:6px}
 .card p{color:var(--mut);white-space:pre-line;font-size:14px;margin:6px 0}
 .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
@@ -49,9 +49,26 @@ textarea{min-height:90px}
 .note{background:#2a0a10;border-right:3px solid var(--red);padding:8px 10px;border-radius:6px;font-size:13px;margin-top:10px}
 #toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:var(--moon);color:#000;padding:8px 18px;border-radius:8px;display:none;z-index:9;font-weight:600}
 @media(prefers-reduced-motion:no-preference){.card{transition:border-color .2s}.card:hover{border-color:#3b3b4a}}
+#bg{position:fixed;inset:0;z-index:-2;background:url(team.jpg) center/cover no-repeat,radial-gradient(900px 500px at 50% 0,#3a0a14,#050507 70%);filter:saturate(1.1);animation:drift 40s ease-in-out infinite alternate}
+#bg::after{content:"";position:absolute;inset:0;background:linear-gradient(#050507d9,#05050780 40%,#050507f2)}
+@keyframes drift{from{transform:scale(1.05)}to{transform:scale(1.15) translate(-1.5%,1%)}}
+#fox{position:fixed;bottom:60px;left:0;width:130px;z-index:1;pointer-events:none;filter:drop-shadow(0 0 10px #e11d2e99);animation:walk 36s linear infinite}
+@keyframes walk{0%{transform:translateX(-160px) scaleX(1)}46%{transform:translateX(calc(100vw + 30px)) scaleX(1)}50%{transform:translateX(calc(100vw + 30px)) scaleX(-1)}96%{transform:translateX(-160px) scaleX(-1)}100%{transform:translateX(-160px) scaleX(1)}}
+#fox .tail{transform-origin:50px 58px;animation:wag 1.2s ease-in-out infinite alternate}
+@keyframes wag{from{transform:rotate(-9deg)}to{transform:rotate(9deg)}}
+#fox .leg{transform-box:fill-box;transform-origin:50% 0;animation:step .6s ease-in-out infinite alternate}
+#fox .b{animation-direction:alternate-reverse}
+@keyframes step{from{transform:rotate(-22deg)}to{transform:rotate(22deg)}}
+@media(prefers-reduced-motion:reduce){#fox{display:none}#bg{animation:none}}
 </style>
 </head>
 <body>
+<div id="bg"></div>
+<svg id="fox" viewBox="0 0 170 100" aria-hidden="true"><g class="tail"><path d="M50 62C22 72 0 52 8 28C12 18 22 20 26 30C32 44 42 52 54 56Z" fill="#e8661a"/><path d="M8 28C12 18 22 20 26 30C20 33 12 34 8 28Z" fill="#fff"/></g>
+<rect class="leg b" x="58" y="64" width="7" height="24" rx="3.5" fill="#2a1410"/><rect class="leg" x="68" y="64" width="7" height="24" rx="3.5" fill="#2a1410"/>
+<ellipse cx="80" cy="58" rx="36" ry="17" fill="#e8661a"/><ellipse cx="84" cy="67" rx="26" ry="7" fill="#ffe9d6"/>
+<rect class="leg" x="94" y="64" width="7" height="24" rx="3.5" fill="#2a1410"/><rect class="leg b" x="104" y="64" width="7" height="24" rx="3.5" fill="#2a1410"/>
+<path d="M108 52L112 28L124 42L132 42L142 28L146 54L160 62L146 68L120 70Z" fill="#e8661a"/><path d="M120 70L146 68L158 63L140 60Z" fill="#fff"/><circle cx="159" cy="62" r="2.5" fill="#111"/><circle cx="136" cy="55" r="2" fill="#111"/></svg>
 <header><div class="logo">P<b>J</b>A</div><button class="btn ghost" id="auth">تسجيل الدخول بـ Google</button></header>
 <main>
 <section class="tab" id="team"><h2>حسابات الفريق</h2><div class="grid" id="teamLinks"></div><h2 style="margin-top:24px">ألعاب الفريق</h2><div class="chips" id="games"></div></section>
@@ -94,7 +111,7 @@ const isAdmin=()=>user&&ADMINS.includes(user.email);
 /* دخول */
 const login=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>toast("تعذّر تسجيل الدخول"));
 $("#auth").onclick=()=>user?signOut(auth):login();
-onAuthStateChanged(auth,u=>{user=u;$("#auth").textContent=u?`خروج (${u.displayName?.split(" ")[0]||""})`:"تسجيل الدخول بـ Google";$("#adminBox").style.display=isAdmin()?"block":"none";if(isAdmin())watchReqs();renderPlayers();renderProducts()});
+onAuthStateChanged(auth,u=>{user=u;$("#auth").textContent=u?`خروج (${u.displayName?.split(" ")[0]||""})`:"تسجيل الدخول بـ Google";$("#adminBox").style.display=isAdmin()?"block":"none";if(isAdmin()){watchReqs();watchPlayers()}else loadMine();renderPlayers();renderProducts()});
 
 /* تنقل */
 const FAB={players:["إضافة لاعب",addPlayer],store:["إضافة منتج",addProduct]};
@@ -123,17 +140,19 @@ async function savePlayer(d){
   t.set(cr,{n});
   t.set(pr,{uid:user.uid,code:n,name:d.name.slice(0,40),age:Number(d.age)||null,insta:safeUrl(d.insta),tiktok:safeUrl(d.tiktok),discord:d.discord.slice(0,80),createdAt:serverTimestamp()});
   return n});
- notify(code,d.name)}
+ notify(code,d.name);if(!isAdmin())loadMine()}
 async function notify(code,name){
  if(!EMAILJS.key)return;
  try{const{default:ej}=await import("https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/+esm");
   await ej.send(EMAILJS.service,EMAILJS.template,{code,name,email:user.email},{publicKey:EMAILJS.key})}catch{}}
 let players=[];
-onSnapshot(query(collection(db,"players"),orderBy("createdAt","desc")),s=>{players=s.docs.map(d=>({id:d.id,...d.data()}));renderPlayers()});
+let pw=false;
+function watchPlayers(){if(pw)return;pw=true;onSnapshot(query(collection(db,"players"),orderBy("createdAt","desc")),s=>{players=s.docs.map(d=>({id:d.id,...d.data()}));renderPlayers()},e=>{pw=false;toast("خطأ بقراءة اللاعبين: "+e.code)})}
+function loadMine(){if(!user){players=[];renderPlayers();return}getDoc(doc(db,"players",user.uid)).then(x=>{players=x.exists()?[{id:x.id,...x.data()}]:[];renderPlayers()}).catch(e=>toast("خطأ: "+e.code))}
 function renderPlayers(){
  $("#playerList").innerHTML=players.length?players.map(p=>`<div class="card"><h3>${esc(p.name)}${p.age?` <span class="tag">(${p.age})</span>`:""}${own(p)&&p.code?` <span class="tag">#${p.code}</span>`:""}</h3>
  <div class="links">${link(p.insta,"Instagram")}${link(p.tiktok,"TikTok")}${safeUrl(p.discord)?link(p.discord,"Discord"):p.discord?`<span class="tag">Discord: ${esc(p.discord)}</span>`:""}</div>
- ${own(p)?`<div class="row"><button class="btn ghost" data-del="players/${p.id}">حذف</button></div>`:""}</div>`).join(""):`<div class="empty">ما في لاعبين بعد. اضغط + وأضف نفسك.</div>`}
+ ${own(p)?`<div class="row"><button class="btn ghost" data-del="players/${p.id}">حذف</button></div>`:""}</div>`).join(""):`<div class="empty">${isAdmin()?"ما في لاعبين بعد.":"قائمة اللاعبين للإدارة فقط. سجّل نفسك بزر +"}</div>`}
 const own=x=>user&&(x.uid===user.uid||isAdmin());
 
 /* الفريق */
